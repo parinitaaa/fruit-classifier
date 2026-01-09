@@ -5,7 +5,7 @@ function App() {
   const [width, setWidth] = useState('');
   const [mass, setMass] = useState('');
   const [colorScore, setColorScore] = useState('');
-  const [result, setResult] = useState('');
+  const [result, setResult] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,10 +22,10 @@ function App() {
       });
 
       const data = await response.json();
-      setResult(data.fruit);
+      setResult(data);
     } catch (err) {
       console.error(err);
-      setResult('Error: Failed to fetch');
+      setResult({ fruit: 'Error: Failed to fetch', model: '', confidence: 0 });
     }
   };
 
@@ -99,8 +99,15 @@ function App() {
         <br />
         <button type="submit" style={buttonStyle}>Predict Fruit</button>
       </form>
+
       {result && (
-        <h3 style={{ marginTop: '20px', color: '#333' }}>Predicted Fruit: {result}</h3>
+        <div style={{ marginTop: '20px', color: '#333' }}>
+          <h3>Predicted Fruit: {result.fruit}</h3>
+          <p style={{ fontSize: '14px', color: '#555' }}>
+            Confidence: {Math.round(result.confidence * 100)}% <br />
+            This prediction was made using <strong>{result.model}</strong>.
+          </p>
+        </div>
       )}
     </div>
   );
