@@ -27,5 +27,5 @@ print(classification_report(y_test, y_pred))
 joblib.dump(rf, "model/rf_model.pkl")
 
 
-print("random forest model saved successfully.")
+print("random forest model is saved successfully.")
 

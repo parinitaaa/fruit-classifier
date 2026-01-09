@@ -28,14 +28,14 @@ def predict():
 
         fruit_label = rf.predict(new_fruit)[0]
         fruit_name = lookup_fruit_name[fruit_label]
-        
+
         proba = rf.predict_proba(new_fruit)
         confidence = float(max(proba[0]))
        
 
         return jsonify({
             "fruit": fruit_name,
-            "model": "Random Forest",
+            "model": "Random  Forest",
             "confidence": round(confidence, 2)
         })
 
