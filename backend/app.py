@@ -1,66 +1,51 @@
 from flask import Flask, request, jsonify
-import pandas as pd
 from flask_cors import CORS
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.neighbors import KNeighborsClassifier
+import pandas as pd
+import joblib
 
-# Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# -------------------------
-# 1️⃣ Load and prepare dataset
-# -------------------------
-fruits = pd.read_table('data/fruitdata.txt') 
+# Load saved model & scaler
+knn = joblib.load("model/knn_model.pkl")
+scaler = joblib.load("model/scaler.pkl")
 
-# Features and labels
-X = fruits[['height', 'width', 'mass', 'color_score']]
-Y = fruits['fruit_label']
+# Load lookup table
+fruits = pd.read_table("data/fruitdata.txt")
+lookup_fruit_name = dict(
+    zip(fruits.fruit_label.unique(), fruits.fruit_name.unique())
+)
 
-# Scale features so KNN works properly
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
-
-# Train KNN classifier
-knn = KNeighborsClassifier(n_neighbors=5)
-knn.fit(X_scaled, Y)
-
-# Map numeric labels to fruit names
-lookup_fruit_name = dict(zip(fruits.fruit_label.unique(), fruits.fruit_name.unique()))
-
-# -------------------------
-# 2️⃣ API endpoint
-# -------------------------
-@app.route('/predict', methods=['POST'])
+@app.route("/predict", methods=["POST"])
 def predict():
-    data = request.json
     try:
-        # Extract features from JSON
-        height = float(data['height'])
-        width = float(data['width'])
-        mass = float(data['mass'])
-        color_score = float(data['color_score'])
+        data = request.json
 
-        # Put into DataFrame
-        new_fruit = pd.DataFrame([[height, width, mass, color_score]], columns=X.columns)
+        new_fruit = pd.DataFrame(
+            [[
+                float(data["height"]),
+                float(data["width"]),
+                float(data["mass"]),
+                float(data["color_score"])
+            ]],
+            columns=["height", "width", "mass", "color_score"]
+        )
 
-        # Scale new input
         new_fruit_scaled = scaler.transform(new_fruit)
-
-        # Predict label
         fruit_label = knn.predict(new_fruit_scaled)[0]
         fruit_name = lookup_fruit_name[fruit_label]
+        proba = knn.predict_proba(new_fruit_scaled)
+        confidence = float(max(proba[0]))
+       
 
-        # Return JSON response
-        return jsonify({'fruit': fruit_name})
+        return jsonify({
+            "fruit": fruit_name,
+            "model": "KNN",
+            "confidence": round(confidence, 2)
+        })
 
     except Exception as e:
-        return jsonify({'error': str(e)})
+        return jsonify({"error": str(e)})
 
-# -------------------------
-# 3️⃣ Run app
-# -------------------------
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
-whatr
