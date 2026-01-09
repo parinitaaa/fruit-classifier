@@ -6,15 +6,10 @@ import joblib
 app = Flask(__name__)
 CORS(app)
 
-# Load saved model & scaler
-knn = joblib.load("model/knn_model.pkl")
-scaler = joblib.load("model/scaler.pkl")
+rf = joblib.load("model/rf_model.pkl")
 
-# Load lookup table
 fruits = pd.read_table("data/fruitdata.txt")
-lookup_fruit_name = dict(
-    zip(fruits.fruit_label.unique(), fruits.fruit_name.unique())
-)
+lookup_fruit_name = dict(zip(fruits.fruit_label.unique(), fruits.fruit_name.unique()))
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -31,16 +26,16 @@ def predict():
             columns=["height", "width", "mass", "color_score"]
         )
 
-        new_fruit_scaled = scaler.transform(new_fruit)
-        fruit_label = knn.predict(new_fruit_scaled)[0]
+        fruit_label = rf.predict(new_fruit)[0]
         fruit_name = lookup_fruit_name[fruit_label]
-        proba = knn.predict_proba(new_fruit_scaled)
+        
+        proba = rf.predict_proba(new_fruit)
         confidence = float(max(proba[0]))
        
 
         return jsonify({
             "fruit": fruit_name,
-            "model": "KNN",
+            "model": "Random Forest",
             "confidence": round(confidence, 2)
         })
 
